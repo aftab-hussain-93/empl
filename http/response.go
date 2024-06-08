@@ -8,18 +8,17 @@ import (
 	fault "github.com/aftab-hussain-93/empl/err"
 )
 
-func appErrorToHTTPError(err error) (int, any) {
+func appErrorToHTTPError(err error) (int, *fault.HTTPError) {
 	// unhandled exception
-	resp := map[string]map[string]string{
-		"error": {
-			"message":       "Internal Server Error",
-			"internalError": err.Error(),
+	resp := &fault.HTTPError{
+		Error: &fault.Err{
+			Code:          fault.ErrInternalServer,
+			Message:       "Internal Server Error",
+			InternalError: err,
 		},
 	}
 	if appErr, ok := fault.FromError(err); ok {
-		resp := map[string]*fault.Err{
-			"error": appErr,
-		}
+		resp := &fault.HTTPError{Error: appErr}
 		return appErr.Code.GetHTTPStatusCode(), resp
 	}
 
@@ -35,9 +34,10 @@ func Respond(w http.ResponseWriter, statusCode int, body any) {
 	respBytes, err := json.Marshal(body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("error %s", err.Error())))
+		_, _ = w.Write([]byte(fmt.Sprintf("error %s", err.Error())))
 		return
 	}
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	w.Write(respBytes)
+	_, _ = w.Write(respBytes)
 }

@@ -21,8 +21,8 @@ func getConnString() string {
 
 func NewDB() (*pgxpool.Pool, func()) {
 	var schema = `
-		CREATE TABLE IF NOT EXISTS employee (
-			id int,
+		CREATE TABLE IF NOT EXISTS employees (
+			id serial primary key,
 			name text,
 			position text,
 			salary float

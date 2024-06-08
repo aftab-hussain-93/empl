@@ -6,7 +6,8 @@ type Repository interface {
 	Create(context.Context, *Employee) (*Employee, error)
 	Update(context.Context, uint, *Employee) (*Employee, error)
 	GetByID(context.Context, uint) (*Employee, error)
-	Get(context.Context, int64, int64) ([]*Employee, error)
+	Get(context.Context, Pagination) ([]*Employee, error)
+	Count(ctx context.Context) (int64, error)
 }
 
 type EmployeeService interface {
@@ -14,6 +15,12 @@ type EmployeeService interface {
 	GetEmployeeByID(context.Context, uint) (*Employee, error)
 	UpdateEmployee(context.Context, uint, *Employee) (*Employee, error)
 	DeleteEmployee(context.Context, uint) error
+	ListEmployees(ctx context.Context, pageSize int64, pageNumber int64) ([]*Employee, int64, error)
+}
+
+type Pagination struct {
+	Offset int64
+	Limit  int64
 }
 
 type Employee struct {
@@ -41,3 +48,5 @@ const (
 	EmployeePositionManager EmployeePosition = "manager"
 	EmployeePositionTrainee EmployeePosition = "trainee"
 )
+
+const MAX_PAGE_SIZE = 100

@@ -1,6 +1,6 @@
 services:
   app:
-    container_name: golang_container
+    container_name: test_golang_container
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -8,20 +8,23 @@ services:
       - DATABASE_HOST=${DB_HOST}
       - DATABASE_PORT=${DB_PORT}
     tty: true
-    build: .
+    # pointing to the main application
+    build:
+      context: ../
+      dockerfile: tests/Dockerfile
     ports:
-      - 8080:8080
+      - 9090:8080
     restart: on-failure
     volumes:
       - .:/app
     depends_on:
       - postgresdb
     networks:
-      - app_network
+      - test_app_network
 
   postgresdb:
     image: postgres:latest
-    container_name: postgres_container
+    container_name: test_postgres_container
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -31,9 +34,9 @@ services:
     healthcheck:
       test: pg_isready -U ${DB_USER} -d ${DB_NAME}
     volumes:
-      - ./pg_data:/var/lib/postgresql/data
+      - ./pg_data_test:/var/lib/postgresql/data
     networks:
-      - app_network
+      - test_app_network
 
 volumes:
   pg_data:
@@ -41,5 +44,5 @@ volumes:
 
 # Networks to be created to facilitate communication between containers
 networks:
-  app_network:
+  test_app_network:
     driver: bridge

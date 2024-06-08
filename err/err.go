@@ -2,16 +2,37 @@
 package fault
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 )
 
+type HTTPError struct {
+	Error *Err `json:"error"`
+}
+
 // Err is a custom error struct that implements the `error` interface
 type Err struct {
-	Code          AppErrorCode `json:"code"`
-	Message       string       `json:"message"`
-	InternalError error        `json:"internalError"`
+	Code          AppErrorCode
+	Message       string
+	InternalError error
+}
+
+func (e *Err) MarshalJSON() ([]byte, error) {
+	internalErr := ""
+	if e.InternalError != nil {
+		internalErr = e.InternalError.Error()
+	}
+	return json.Marshal(&struct {
+		Code          string `json:"code"`
+		Message       string `json:"message"`
+		InternalError string `json:"internalError,omitempty"`
+	}{
+		Code:          string(e.Code),
+		Message:       e.Message,
+		InternalError: internalErr,
+	})
 }
 
 // Error implements error.

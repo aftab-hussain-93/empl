@@ -28,10 +28,10 @@ func BindRequestBody(r *http.Request, obj any) error {
 		return nil
 	}
 	if err := json.NewDecoder(r.Body).Decode(obj); err != nil {
-		return fault.New(fault.ErrBadRequest, "Bad Request", err)
+		return fault.New(fault.ErrBadRequest, "Bad Request! "+err.Error(), nil)
 	}
 	if err := validate.Struct(obj); err != nil {
-		return fault.New(fault.ErrBadRequest, "Bad Request", err)
+		return fault.New(fault.ErrBadRequest, "Bad Request! "+err.Error(), nil)
 	}
 	return nil
 }
