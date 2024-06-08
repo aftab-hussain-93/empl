@@ -2,23 +2,15 @@ package service
 
 import (
 	"context"
-
-	"github.com/aftab-hussain-93/empl/types"
 )
-
-type Repository interface {
-	Create(context.Context, *types.Employee) (*types.Employee, error)
-	Update(context.Context, uint, *types.Employee) (*types.Employee, error)
-	GetByID(context.Context, uint) (*types.Employee, error)
-	Get(context.Context, int64, int64) ([]*types.Employee, error)
-}
 
 type employeeSvc struct {
 	repo Repository
 }
 
 // CreateEmployee implements EmployeeService.
-func (e *employeeSvc) CreateEmployee(context.Context, *types.Employee) (*types.Employee, error) {
+func (s *employeeSvc) CreateEmployee(ctx context.Context, emp *EmployeeCreateRequest) (*Employee, error) {
+	// return s.repo.Create(ctx, emp)
 	panic("unimplemented")
 }
 
@@ -28,16 +20,16 @@ func (e *employeeSvc) DeleteEmployee(context.Context, uint) error {
 }
 
 // GetEmployeeByID implements EmployeeService.
-func (e *employeeSvc) GetEmployeeByID(context.Context, uint) (*types.Employee, error) {
+func (e *employeeSvc) GetEmployeeByID(context.Context, uint) (*Employee, error) {
 	panic("unimplemented")
 }
 
 // UpdateEmployee implements EmployeeService.
-func (e *employeeSvc) UpdateEmployee(context.Context, uint, *types.Employee) (*types.Employee, error) {
+func (e *employeeSvc) UpdateEmployee(context.Context, uint, *Employee) (*Employee, error) {
 	panic("unimplemented")
 }
 
-var _ types.EmployeeService = (*employeeSvc)(nil)
+var _ EmployeeService = (*employeeSvc)(nil)
 
 func NewService(repo Repository) *employeeSvc {
 	return &employeeSvc{repo}

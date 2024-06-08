@@ -1,18 +1,18 @@
-package handlers
+package routes
 
 import (
-	"encoding/json"
 	"net/http"
 
-	"github.com/aftab-hussain-93/empl/types"
+	http_server "github.com/aftab-hussain-93/empl/http"
+	"github.com/aftab-hussain-93/empl/service"
 	"github.com/go-chi/chi/v5"
 )
 
 type handler struct {
-	svc types.EmployeeService
+	svc service.EmployeeService
 }
 
-func CreateHandler(svc types.EmployeeService) func(chi.Router) http.Handler {
+func CreateHandler(svc service.EmployeeService) func(chi.Router) http.Handler {
 	h := &handler{
 		svc: svc,
 	}
@@ -29,18 +29,18 @@ func CreateHandler(svc types.EmployeeService) func(chi.Router) http.Handler {
 
 func (h *handler) create() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		emp := &types.Employee{}
-		err := bindJSON(r, emp)
+		req := &service.EmployeeCreateRequest{}
+		err := http_server.BindRequestBody(r, req)
 		if err != nil {
-			writeErrorResponse(w, err)
+			http_server.RespondWithError(w, err)
 			return
 		}
-		emp, err = h.svc.CreateEmployee(r.Context(), emp)
+		resp, err := h.svc.CreateEmployee(r.Context(), req)
 		if err != nil {
-			writeErrorResponse(w, err)
+			http_server.RespondWithError(w, err)
 			return
 		}
-		writeResponse(w, http.StatusCreated, emp)
+		http_server.Respond(w, http.StatusCreated, resp)
 	}
 }
 
@@ -54,26 +54,4 @@ func (h *handler) getByID() func(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) delete() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {}
-}
-
-func writeErrorResponse(w http.ResponseWriter, err error) {
-	status, resp := getErrorResponse(err)
-	writeResponse(w, status, resp)
-}
-
-func getErrorResponse(err error) (int, any) {
-	resp := map[string]string{
-		"error": err.Error(),
-	}
-
-	return http.StatusInternalServerError, resp
-}
-
-func writeResponse(w http.ResponseWriter, statusCode int, body any) {
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(body)
-}
-
-func bindJSON(r *http.Request, body any) error {
-	return json.NewDecoder(r.Body).Decode(body)
 }
