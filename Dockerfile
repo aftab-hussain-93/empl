@@ -1,13 +1,29 @@
-FROM golang:1.22.4
+# Start from golang base image
+FROM golang:alpine
 
+# Install git.
+# Git is required for fetching the dependencies.
+RUN apk update && apk add --no-cache git && apk add --no-cach bash && apk add build-base
+
+# Setup folders
+RUN mkdir /app
 WORKDIR /app
 
-# pre-copy/cache go.mod for pre-downloading dependencies and only redownloading them in subsequent builds if they change
-COPY go.mod ./
-RUN go mod download && go mod verify
+# Copy the source from the current directory to the working Directory inside the container
+COPY . .
+COPY .env .
 
-COPY . ./
-RUN make build
+# Download all the dependencies
+RUN go get -d -v ./...
 
-EXPOSE 3000
-CMD ["./bin/empl"]
+# Install the package
+RUN go install -v ./...
+
+# Build the Go app
+RUN go build -o /build
+
+# Expose port 8080 to the outside world
+EXPOSE 8080
+
+# Run the executable
+CMD [ "/build" ]

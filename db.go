@@ -3,33 +3,46 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewDB() (*pgxpool.Pool, error) {
-	// var schema = `
-	// 	CREATE TABLE IF NOT EXISTS employee (
-	// 		id int,
-	// 		name text,
-	// 		position text,
-	// 		salary float64
-	// 	);`
+func getConnString() string {
+	dbHost := os.Getenv("DATABASE_HOST")
+	dbPort := os.Getenv("DATABASE_PORT")
+	dbName := os.Getenv("POSTGRES_DB")
+	dbUser := os.Getenv("POSTGRES_USER")
+	dbPassword := os.Getenv("POSTGRES_PASSWORD")
 
-	connString := "postgres://postgres:password@localhost/DB_1?sslmode=disable"
-	if dsn := os.Getenv("POSTGRES_URL"); dsn != "" {
-		connString = dsn
-	}
+	return fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=disable", dbUser, dbPassword, dbName, dbHost, dbPort)
+}
 
-	dbpool, err := pgxpool.New(context.Background(), connString)
+func NewDB() (*pgxpool.Pool, func()) {
+	var schema = `
+		CREATE TABLE IF NOT EXISTS employee (
+			id int,
+			name text,
+			position text,
+			salary float
+		);`
+	dsn := getConnString()
+	log.Println("connecting to postgres, dsn - ", dsn)
+
+	ctx := context.Background()
+
+	dbpool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
-		os.Exit(1)
+		log.Fatal("Unable to create connection pool, ", err.Error())
 	}
-	defer dbpool.Close()
+	if err := dbpool.Ping(ctx); err != nil {
+		log.Fatal("ping failed, err", err.Error())
+	}
+	_, err = dbpool.Exec(ctx, schema)
+	if err != nil {
+		log.Fatal("Unable to run schema sql, ", err.Error())
+	}
 
-	// dbpool.Qu
-	// // pgxpool.MustExec(s÷chema)
-	return dbpool, nil
+	return dbpool, dbpool.Close
 }
