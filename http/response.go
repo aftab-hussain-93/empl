@@ -9,7 +9,13 @@ import (
 )
 
 func appErrorToHTTPError(err error) (int, *fault.HTTPError) {
-	// unhandled exception
+	// check for application errors
+	if appErr, ok := fault.FromError(err); ok {
+		resp := &fault.HTTPError{Error: appErr}
+		return appErr.Code.GetHTTPStatusCode(), resp
+	}
+
+	// unhandled exception or non-application errors
 	resp := &fault.HTTPError{
 		Error: &fault.Err{
 			Code:          fault.ErrInternalServer,
@@ -17,27 +23,26 @@ func appErrorToHTTPError(err error) (int, *fault.HTTPError) {
 			InternalError: err,
 		},
 	}
-	if appErr, ok := fault.FromError(err); ok {
-		resp := &fault.HTTPError{Error: appErr}
-		return appErr.Code.GetHTTPStatusCode(), resp
-	}
-
 	return http.StatusInternalServerError, resp
 }
 
+// RespondWithError - parses the error and writes to response in a stand error response format
 func RespondWithError(w http.ResponseWriter, err error) {
 	status, resp := appErrorToHTTPError(err)
 	Respond(w, status, resp)
 }
 
 func Respond(w http.ResponseWriter, statusCode int, body any) {
-	respBytes, err := json.Marshal(body)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte(fmt.Sprintf("error %s", err.Error())))
-		return
-	}
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	_, _ = w.Write(respBytes)
+	if body != nil {
+		respBytes, err := json.Marshal(body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(fmt.Sprintf("error %s", err.Error())))
+			return
+		}
+
+		_, _ = w.Write(respBytes)
+	}
 }

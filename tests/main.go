@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/aftab-hussain-93/empl/client"
 	fault "github.com/aftab-hussain-93/empl/err"
@@ -12,9 +14,19 @@ import (
 )
 
 func main() {
-	url := "http://localhost:9090/api"
+	appHost := os.Getenv("APP_HOST")
+	if appHost == "" {
+		appHost = "app" // docker compose name
+	}
+	appPort := os.Getenv("APP_PORT")
+	if appPort == "" {
+		appPort = "8080"
+	}
+	url := fmt.Sprintf("http://%s:%s/api", appHost, appPort)
 	http_client := client.New()
 	http_client.SetBaseURL(url)
+
+	appStartUpWait(url + "/status")
 
 	ctx := context.Background()
 
@@ -28,6 +40,26 @@ func main() {
 		log.Println("create employee w/ invalid name test failed", err.Error())
 	} else {
 		log.Println("create employee w/ invalid name test passed")
+	}
+}
+
+func appStartUpWait(statusCheckURL string) {
+	log.Println("waiting for app to startup")
+	for {
+		resp, err := http.Get(statusCheckURL)
+		if err == nil {
+			log.Println("got status", resp.StatusCode)
+			defer resp.Body.Close()
+			if resp.StatusCode == 200 {
+				log.Println("api is up")
+				return
+			}
+		} else {
+			log.Println("errored", err.Error())
+		}
+
+		time.Sleep(200 * time.Millisecond)
+		log.Println("finding")
 	}
 }
 

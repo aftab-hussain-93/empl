@@ -23,7 +23,11 @@ func CreateHandler(svc service.EmployeeService) func(chi.Router) http.Handler {
 			r.Post("/", h.create())
 			r.Get("/", h.list())
 			r.Get("/{id}", h.getByID())
+			r.Put("/{id}", h.update())
 			r.Delete("/{id}", h.delete())
+		})
+		r.Get("/status", func(w http.ResponseWriter, r *http.Request) {
+			http_server.Respond(w, http.StatusOK, map[string]string{"status": "ok"})
 		})
 		return r
 	}
@@ -32,7 +36,7 @@ func CreateHandler(svc service.EmployeeService) func(chi.Router) http.Handler {
 func (h *handler) create() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &service.EmployeeCreateRequest{}
-		err := http_server.BindRequestBody(r, req)
+		err := http_server.BindRequestBody(r.Body, req)
 		if err != nil {
 			http_server.RespondWithError(w, err)
 			return
@@ -99,9 +103,70 @@ func (h *handler) list() func(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) getByID() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {}
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		if id == "" {
+			http_server.RespondWithError(w, fault.New(fault.ErrBadRequest, "id not provided", nil))
+			return
+		}
+		empID, err := strconv.Atoi(id)
+		if err != nil {
+			http_server.RespondWithError(w, fault.New(fault.ErrBadRequest, "invalid id provided", nil))
+			return
+		}
+		emp, err := h.svc.GetEmployeeByID(r.Context(), empID)
+		if err != nil {
+			http_server.RespondWithError(w, err)
+			return
+		}
+		http_server.Respond(w, http.StatusOK, emp)
+	}
+}
+
+func (h *handler) update() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		if id == "" {
+			http_server.RespondWithError(w, fault.New(fault.ErrBadRequest, "id not provided", nil))
+			return
+		}
+		empID, err := strconv.Atoi(id)
+		if err != nil {
+			http_server.RespondWithError(w, fault.New(fault.ErrBadRequest, "invalid id provided", nil))
+			return
+		}
+		req := &service.EmployeeUpdateRequest{}
+		if err := http_server.BindRequestBody(r.Body, req); err != nil {
+			http_server.RespondWithError(w, err)
+			return
+		}
+
+		emp, err := h.svc.UpdateEmployee(r.Context(), empID, req)
+		if err != nil {
+			http_server.RespondWithError(w, err)
+			return
+		}
+		http_server.Respond(w, http.StatusOK, emp)
+	}
 }
 
 func (h *handler) delete() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {}
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		if id == "" {
+			http_server.RespondWithError(w, fault.New(fault.ErrBadRequest, "id not provided", nil))
+			return
+		}
+		empID, err := strconv.Atoi(id)
+		if err != nil {
+			http_server.RespondWithError(w, fault.New(fault.ErrBadRequest, "invalid id provided", nil))
+			return
+		}
+		err = h.svc.DeleteEmployee(r.Context(), empID)
+		if err != nil {
+			http_server.RespondWithError(w, err)
+			return
+		}
+		http_server.Respond(w, http.StatusNoContent, nil)
+	}
 }

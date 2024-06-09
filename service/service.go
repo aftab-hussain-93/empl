@@ -2,7 +2,11 @@ package service
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
+	fault "github.com/aftab-hussain-93/empl/err"
+	"github.com/jackc/pgx/v5"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -26,13 +30,38 @@ func (s *employeeSvc) CreateEmployee(ctx context.Context, req *EmployeeCreateReq
 }
 
 // DeleteEmployee implements EmployeeService.
-func (e *employeeSvc) DeleteEmployee(context.Context, uint) error {
-	panic("unimplemented")
+func (s *employeeSvc) DeleteEmployee(ctx context.Context, id int) error {
+	// check if employee exists
+	_, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		// return 404 error is not found
+		if errors.Is(err, sql.ErrNoRows) {
+			return fault.New(fault.ErrNotFound, "Record not found", nil)
+		}
+		return fault.New(fault.ErrInternalServer, "Internal Server Error", err)
+	}
+
+	err = s.repo.Delete(ctx, id)
+	if err != nil {
+		return fault.New(fault.ErrInternalServer, "Internal Server Error", err)
+	}
+
+	return nil
 }
 
 // GetEmployeeByID implements EmployeeService.
-func (e *employeeSvc) GetEmployeeByID(context.Context, uint) (*Employee, error) {
-	panic("unimplemented")
+func (s *employeeSvc) GetEmployeeByID(ctx context.Context, id int) (*Employee, error) {
+	// check if employee exists
+	emp, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		// return 404 error is not found
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fault.New(fault.ErrNotFound, "Record not found", nil)
+		}
+		return nil, fault.New(fault.ErrInternalServer, "Internal Server Error", err)
+	}
+
+	return emp, nil
 }
 
 // GetEmployeeByID implements EmployeeService.
@@ -67,7 +96,7 @@ func (s *employeeSvc) ListEmployees(ctx context.Context, pageSize, pageNumber in
 	})
 
 	eg.Go(func() error {
-		emps, err := s.repo.Get(ctx, page)
+		emps, err := s.repo.Get(egCtx, page)
 		if err != nil {
 			return err
 		}
@@ -83,8 +112,34 @@ func (s *employeeSvc) ListEmployees(ctx context.Context, pageSize, pageNumber in
 }
 
 // UpdateEmployee implements EmployeeService.
-func (e *employeeSvc) UpdateEmployee(context.Context, uint, *Employee) (*Employee, error) {
-	panic("unimplemented")
+func (s *employeeSvc) UpdateEmployee(ctx context.Context, id int, data *EmployeeUpdateRequest) (*Employee, error) {
+	// check if employee exists
+	emp, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		// return 404 error is not found
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fault.New(fault.ErrNotFound, "Record not found", nil)
+		}
+		return nil, fault.New(fault.ErrInternalServer, "Internal Server Error", err)
+	}
+
+	// setting the updated fields
+	if data.Name != "" {
+		emp.Name = data.Name
+	}
+	if data.Position != "" {
+		emp.Position = data.Position
+	}
+	if data.Salary > 0 {
+		emp.Salary = data.Salary
+	}
+
+	emp, err = s.repo.Update(ctx, id, emp)
+	if err != nil {
+		return nil, fault.New(fault.ErrInternalServer, "Internal Server Error", err)
+	}
+
+	return emp, nil
 }
 
 var _ EmployeeService = (*employeeSvc)(nil)

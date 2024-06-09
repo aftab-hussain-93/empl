@@ -2,7 +2,7 @@ package http
 
 import (
 	"encoding/json"
-	"net/http"
+	"io"
 
 	"github.com/go-playground/validator/v10"
 
@@ -20,14 +20,14 @@ func init() {
 // @Params -
 // r - http request
 // obj - the object into which the request body must be deserialized; this should ideally be a pointer to the object
-func BindRequestBody(r *http.Request, obj any) error {
-	if r == nil {
+func BindRequestBody(body io.Reader, obj any) error {
+	if body == nil {
 		return nil
 	}
 	if obj == nil {
 		return nil
 	}
-	if err := json.NewDecoder(r.Body).Decode(obj); err != nil {
+	if err := json.NewDecoder(body).Decode(obj); err != nil {
 		return fault.New(fault.ErrBadRequest, "Bad Request! "+err.Error(), nil)
 	}
 	if err := validate.Struct(obj); err != nil {

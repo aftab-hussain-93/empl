@@ -13,6 +13,18 @@ type repository struct {
 	db *pgxpool.Pool
 }
 
+// Delete implements service.Repository.
+func (r *repository) Delete(ctx context.Context, id int) error {
+	query := `DELETE FROM employees WHERE id = @id;`
+	args := pgx.NamedArgs{
+		"id": id,
+	}
+	if _, err := r.db.Exec(ctx, query, args); err != nil {
+		return fmt.Errorf("unable to delete employee by id %w", err)
+	}
+	return nil
+}
+
 // Create implements Repository.
 func (r *repository) Create(ctx context.Context, emp *service.Employee) (*service.Employee, error) {
 	query := `INSERT INTO employees (name, position, salary) VALUES (@name, @position, @salary) RETURNING id, name, position, salary;`
@@ -68,13 +80,32 @@ func (r *repository) Count(ctx context.Context) (int64, error) {
 }
 
 // GetByID implements Repository.
-func (r *repository) GetByID(context.Context, uint) (*service.Employee, error) {
-	panic("unimplemented")
+func (r *repository) GetByID(ctx context.Context, id int) (*service.Employee, error) {
+	query := `SELECT id, name, position, salary FROM employees WHERE id = @id LIMIT 1;`
+	args := pgx.NamedArgs{
+		"id": id,
+	}
+	row := &service.Employee{}
+	if err := r.db.QueryRow(ctx, query, args).Scan(&row.ID, &row.Name, &row.Position, &row.Salary); err != nil {
+		return nil, err
+	}
+	return row, nil
 }
 
 // Update implements Repository.
-func (r *repository) Update(context.Context, uint, *service.Employee) (*service.Employee, error) {
-	panic("unimplemented")
+func (r *repository) Update(ctx context.Context, id int, data *service.Employee) (*service.Employee, error) {
+	query := `UPDATE employees SET name=@name, position=@position, salary=@salary WHERE id = @id RETURNING id, name, position,salary;`
+	args := pgx.NamedArgs{
+		"id":       id,
+		"name":     data.Name,
+		"salary":   data.Salary,
+		"position": data.Position,
+	}
+	row := &service.Employee{}
+	if err := r.db.QueryRow(ctx, query, args).Scan(&row.ID, &row.Name, &row.Position, &row.Salary); err != nil {
+		return nil, err
+	}
+	return row, nil
 }
 
 var _ service.Repository = (*repository)(nil)

@@ -1,6 +1,6 @@
 services:
   app:
-    container_name: test_golang_container
+    container_name: test_app_container
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -11,9 +11,9 @@ services:
     # pointing to the main application
     build:
       context: ../
-      dockerfile: tests/Dockerfile
+      dockerfile: tests/app.Dockerfile
     ports:
-      - 9090:8080
+      - 8080:8080
     restart: on-failure
     volumes:
       - .:/app
@@ -35,6 +35,22 @@ services:
       test: pg_isready -U ${DB_USER} -d ${DB_NAME}
     volumes:
       - ./pg_data_test:/var/lib/postgresql/data
+    networks:
+      - test_app_network
+  
+
+  e2e:
+    container_name: test_e2e_container
+    tty: true
+    build:
+      context: ../
+      dockerfile: tests/tests.Dockerfile
+    # environment:
+    #   - name=value
+    restart: on-failure
+    depends_on:
+      - postgresdb
+      - app
     networks:
       - test_app_network
 

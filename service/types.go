@@ -4,17 +4,18 @@ import "context"
 
 type Repository interface {
 	Create(context.Context, *Employee) (*Employee, error)
-	Update(context.Context, uint, *Employee) (*Employee, error)
-	GetByID(context.Context, uint) (*Employee, error)
+	Update(context.Context, int, *Employee) (*Employee, error)
+	GetByID(context.Context, int) (*Employee, error)
+	Delete(context.Context, int) error
 	Get(context.Context, Pagination) ([]*Employee, error)
 	Count(ctx context.Context) (int64, error)
 }
 
 type EmployeeService interface {
 	CreateEmployee(context.Context, *EmployeeCreateRequest) (*Employee, error)
-	GetEmployeeByID(context.Context, uint) (*Employee, error)
-	UpdateEmployee(context.Context, uint, *Employee) (*Employee, error)
-	DeleteEmployee(context.Context, uint) error
+	GetEmployeeByID(context.Context, int) (*Employee, error)
+	UpdateEmployee(context.Context, int, *EmployeeUpdateRequest) (*Employee, error)
+	DeleteEmployee(context.Context, int) error
 	ListEmployees(ctx context.Context, pageSize int64, pageNumber int64) ([]*Employee, int64, error)
 }
 
