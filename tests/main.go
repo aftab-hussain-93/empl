@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/aftab-hussain-93/empl/client"
-	fault "github.com/aftab-hussain-93/empl/err"
-	"github.com/aftab-hussain-93/empl/service"
+	"github.com/aftab-hussain-93/empl/internal/service"
+	fault "github.com/aftab-hussain-93/empl/pkg/err"
 )
 
 func main() {

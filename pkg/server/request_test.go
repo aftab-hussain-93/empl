@@ -1,10 +1,10 @@
-package http
+package server
 
 import (
 	"bytes"
 	"testing"
 
-	"github.com/aftab-hussain-93/empl/service"
+	"github.com/aftab-hussain-93/empl/internal/service"
 )
 
 func TestBindRequestBody(t *testing.T) {

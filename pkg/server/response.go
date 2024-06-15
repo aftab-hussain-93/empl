@@ -1,11 +1,11 @@
-package http
+package server
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
 
-	fault "github.com/aftab-hussain-93/empl/err"
+	fault "github.com/aftab-hussain-93/empl/pkg/err"
 )
 
 func appErrorToHTTPError(err error) (int, *fault.HTTPError) {

@@ -1,4 +1,4 @@
-package http
+package server
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 
-	fault "github.com/aftab-hussain-93/empl/err"
+	fault "github.com/aftab-hussain-93/empl/pkg/err"
 )
 
 var validate *validator.Validate

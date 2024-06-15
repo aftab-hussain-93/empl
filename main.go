@@ -1,10 +1,10 @@
 package main
 
 import (
-	http_server "github.com/aftab-hussain-93/empl/http"
-	"github.com/aftab-hussain-93/empl/repository"
-	routes "github.com/aftab-hussain-93/empl/routes"
-	"github.com/aftab-hussain-93/empl/service"
+	"github.com/aftab-hussain-93/empl/internal/repository"
+	routes "github.com/aftab-hussain-93/empl/internal/routes"
+	"github.com/aftab-hussain-93/empl/internal/service"
+	http_server "github.com/aftab-hussain-93/empl/pkg/server"
 )
 
 func main() {

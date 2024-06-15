@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aftab-hussain-93/empl/service"
+	"github.com/aftab-hussain-93/empl/internal/service"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )

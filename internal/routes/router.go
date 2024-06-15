@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	fault "github.com/aftab-hussain-93/empl/err"
-	http_server "github.com/aftab-hussain-93/empl/http"
-	"github.com/aftab-hussain-93/empl/service"
+	"github.com/aftab-hussain-93/empl/internal/service"
+	fault "github.com/aftab-hussain-93/empl/pkg/err"
+	server "github.com/aftab-hussain-93/empl/pkg/server"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -27,7 +27,7 @@ func CreateHandler(svc service.EmployeeService) func(chi.Router) http.Handler {
 			r.Delete("/{id}", h.delete())
 		})
 		r.Get("/status", func(w http.ResponseWriter, r *http.Request) {
-			http_server.Respond(w, http.StatusOK, map[string]string{"status": "ok"})
+			server.Respond(w, http.StatusOK, map[string]string{"status": "ok"})
 		})
 		return r
 	}
@@ -36,17 +36,17 @@ func CreateHandler(svc service.EmployeeService) func(chi.Router) http.Handler {
 func (h *handler) create() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &service.EmployeeCreateRequest{}
-		err := http_server.BindRequestBody(r.Body, req)
+		err := server.BindRequestBody(r.Body, req)
 		if err != nil {
-			http_server.RespondWithError(w, err)
+			server.RespondWithError(w, err)
 			return
 		}
 		resp, err := h.svc.CreateEmployee(r.Context(), req)
 		if err != nil {
-			http_server.RespondWithError(w, err)
+			server.RespondWithError(w, err)
 			return
 		}
-		http_server.Respond(w, http.StatusCreated, resp)
+		server.Respond(w, http.StatusCreated, resp)
 	}
 }
 
@@ -63,7 +63,7 @@ func (h *handler) list() func(w http.ResponseWriter, r *http.Request) {
 			size, err := strconv.Atoi(pageSizeStr)
 			if err != nil {
 				err := fault.New(fault.ErrBadRequest, "Bad Request! Invalid query param `size`, must be an positive integer", err)
-				http_server.RespondWithError(w, err)
+				server.RespondWithError(w, err)
 				return
 			}
 			if size < 0 {
@@ -76,7 +76,7 @@ func (h *handler) list() func(w http.ResponseWriter, r *http.Request) {
 			num, err := strconv.Atoi(pageNumberStr)
 			if err != nil {
 				err := fault.New(fault.ErrBadRequest, "Bad Request! Invalid query param `page`, must be an positive integer", err)
-				http_server.RespondWithError(w, err)
+				server.RespondWithError(w, err)
 				return
 			}
 			if num <= 0 {
@@ -87,7 +87,7 @@ func (h *handler) list() func(w http.ResponseWriter, r *http.Request) {
 
 		emps, totalEmps, err := h.svc.ListEmployees(r.Context(), int64(pageSize), int64(page))
 		if err != nil {
-			http_server.RespondWithError(w, err)
+			server.RespondWithError(w, err)
 			return
 		}
 
@@ -98,7 +98,7 @@ func (h *handler) list() func(w http.ResponseWriter, r *http.Request) {
 			PageNumber: page,
 		}
 
-		http_server.Respond(w, http.StatusOK, resp)
+		server.Respond(w, http.StatusOK, resp)
 	}
 }
 
@@ -106,20 +106,20 @@ func (h *handler) getByID() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if id == "" {
-			http_server.RespondWithError(w, fault.New(fault.ErrBadRequest, "id not provided", nil))
+			server.RespondWithError(w, fault.New(fault.ErrBadRequest, "id not provided", nil))
 			return
 		}
 		empID, err := strconv.Atoi(id)
 		if err != nil {
-			http_server.RespondWithError(w, fault.New(fault.ErrBadRequest, "invalid id provided", nil))
+			server.RespondWithError(w, fault.New(fault.ErrBadRequest, "invalid id provided", nil))
 			return
 		}
 		emp, err := h.svc.GetEmployeeByID(r.Context(), empID)
 		if err != nil {
-			http_server.RespondWithError(w, err)
+			server.RespondWithError(w, err)
 			return
 		}
-		http_server.Respond(w, http.StatusOK, emp)
+		server.Respond(w, http.StatusOK, emp)
 	}
 }
 
@@ -127,26 +127,26 @@ func (h *handler) update() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if id == "" {
-			http_server.RespondWithError(w, fault.New(fault.ErrBadRequest, "id not provided", nil))
+			server.RespondWithError(w, fault.New(fault.ErrBadRequest, "id not provided", nil))
 			return
 		}
 		empID, err := strconv.Atoi(id)
 		if err != nil {
-			http_server.RespondWithError(w, fault.New(fault.ErrBadRequest, "invalid id provided", nil))
+			server.RespondWithError(w, fault.New(fault.ErrBadRequest, "invalid id provided", nil))
 			return
 		}
 		req := &service.EmployeeUpdateRequest{}
-		if err := http_server.BindRequestBody(r.Body, req); err != nil {
-			http_server.RespondWithError(w, err)
+		if err := server.BindRequestBody(r.Body, req); err != nil {
+			server.RespondWithError(w, err)
 			return
 		}
 
 		emp, err := h.svc.UpdateEmployee(r.Context(), empID, req)
 		if err != nil {
-			http_server.RespondWithError(w, err)
+			server.RespondWithError(w, err)
 			return
 		}
-		http_server.Respond(w, http.StatusOK, emp)
+		server.Respond(w, http.StatusOK, emp)
 	}
 }
 
@@ -154,19 +154,19 @@ func (h *handler) delete() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if id == "" {
-			http_server.RespondWithError(w, fault.New(fault.ErrBadRequest, "id not provided", nil))
+			server.RespondWithError(w, fault.New(fault.ErrBadRequest, "id not provided", nil))
 			return
 		}
 		empID, err := strconv.Atoi(id)
 		if err != nil {
-			http_server.RespondWithError(w, fault.New(fault.ErrBadRequest, "invalid id provided", nil))
+			server.RespondWithError(w, fault.New(fault.ErrBadRequest, "invalid id provided", nil))
 			return
 		}
 		err = h.svc.DeleteEmployee(r.Context(), empID)
 		if err != nil {
-			http_server.RespondWithError(w, err)
+			server.RespondWithError(w, err)
 			return
 		}
-		http_server.Respond(w, http.StatusNoContent, nil)
+		server.Respond(w, http.StatusNoContent, nil)
 	}
 }

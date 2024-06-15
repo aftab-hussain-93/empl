@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	fault "github.com/aftab-hussain-93/empl/err"
+	fault "github.com/aftab-hussain-93/empl/pkg/err"
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/sync/errgroup"
 )
