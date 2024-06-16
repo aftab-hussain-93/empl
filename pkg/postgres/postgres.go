@@ -1,4 +1,4 @@
-package main
+package postgres
 
 import (
 	"context"
@@ -19,14 +19,19 @@ func getConnString() string {
 	return fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=disable", dbUser, dbPassword, dbName, dbHost, dbPort)
 }
 
-func NewDB() (*pgxpool.Pool, func()) {
-	var schema = `
-		CREATE TABLE IF NOT EXISTS employees (
-			id serial primary key,
-			name text,
-			position text,
-			salary float
-		);`
+var schema = `
+	CREATE TABLE IF NOT EXISTS employees (
+		id serial primary key,
+		name text,
+		position text,
+		salary float
+	);`
+
+type DB struct {
+	*pgxpool.Pool
+}
+
+func New() *DB {
 	dsn := getConnString()
 	log.Println("connecting to postgres, dsn - ", dsn)
 
@@ -44,5 +49,5 @@ func NewDB() (*pgxpool.Pool, func()) {
 		log.Fatal("Unable to run schema sql, ", err.Error())
 	}
 
-	return dbpool, dbpool.Close
+	return &DB{dbpool}
 }

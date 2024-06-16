@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	"github.com/aftab-hussain-93/empl/internal/service"
+	"github.com/aftab-hussain-93/empl/pkg/postgres"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type repository struct {
-	db *pgxpool.Pool
+	db *postgres.DB
 }
 
 // Delete implements service.Repository.
@@ -110,6 +110,6 @@ func (r *repository) Update(ctx context.Context, id int, data *service.Employee)
 
 var _ service.Repository = (*repository)(nil)
 
-func NewRepository(db *pgxpool.Pool) *repository {
+func NewRepository(db *postgres.DB) *repository {
 	return &repository{db}
 }
